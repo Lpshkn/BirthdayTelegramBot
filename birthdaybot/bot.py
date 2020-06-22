@@ -1,8 +1,8 @@
 """
 Module for all the actions with the Bot
 """
-import telegram
 import birthdaybot.handlers as handlers
+import birthdaybot.menus as menus
 from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters
 
 
@@ -18,9 +18,11 @@ class BirthdayBot:
         conversation_handler = ConversationHandler(
             entry_points=[CommandHandler('start', handlers.start_handler)],
             states={
-
+                handlers.MAIN_MENU: [
+                    MessageHandler(Filters.regex(menus.STOP_BOT_BUTTON), handlers.stop_bot_handler)
+                ]
             },
-            fallbacks=[]
+            fallbacks=[CommandHandler('stop', handlers.stop_bot_handler)]
         )
         self.dispatcher.add_handler(conversation_handler)
 
