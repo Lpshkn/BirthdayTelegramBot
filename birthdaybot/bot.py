@@ -2,10 +2,8 @@
 Module for all the actions with the Bot
 """
 import birthdaybot.handlers as handlers
-import birthdaybot.menus as menus
 import logging
 from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, PicklePersistence
-from birthdaybot.localization.localization import Localization
 
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -27,19 +25,17 @@ class BirthdayBot:
         """
         The entrypoint of the bot. Define the ConversationHandler and specify all the handlers.
         """
-        # Get a dict of the menus
-        main_menu = Localization.get_menu(Localization.MAIN_MENU)
-
         conversation_handler = ConversationHandler(
             entry_points=[CommandHandler('start', handlers.start_handler)],
             states={
                 handlers.MAIN_MENU: [
-                    MessageHandler(Filters.regex(main_menu[menus.STOP_BOT_BUTTON]), handlers.stop_bot_handler)
+                    MessageHandler(Filters.text & ~Filters.command, handlers.main_menu_handler)
                 ]
             },
             fallbacks=[CommandHandler('stop', handlers.stop_bot_handler)],
 
-            name="main_conversation"
+            name="main_conversation",
+            persistent=True
         )
         self.dispatcher.add_handler(conversation_handler)
 
