@@ -5,7 +5,7 @@ from birthdaybot.bot import BirthdayBot
 
 def main():
     configurator = Configurator(sys.argv[1:])
-    bot = BirthdayBot(configurator.get_token())
+    bot = BirthdayBot(configurator.get_token(), configurator.get_persistence())
     bot.run()
 
 

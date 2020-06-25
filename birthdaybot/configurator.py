@@ -33,6 +33,10 @@ class Configurator:
                             help='The token to work with the bot.',
                             type=str)
 
+        parser.add_argument('-p', '--persistence',
+                            help='File to save conversation states, user/bot data etc. there',
+                            type=str)
+
         return parser
 
     def _get_parameters(self, args):
@@ -54,3 +58,12 @@ class Configurator:
         """
 
         return self._parameters.token
+
+    def get_persistence(self) -> str:
+        """
+        Returns the name of a file where the states of a conversation or data/user data will be saved
+
+        :return: filename
+        """
+
+        return self._parameters.persistence
