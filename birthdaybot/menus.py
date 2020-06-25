@@ -4,12 +4,13 @@ Module to build menus for a conversation.
 from telegram.keyboardbutton import KeyboardButton
 from telegram.replykeyboardmarkup import ReplyKeyboardMarkup
 from telegram.replykeyboardremove import ReplyKeyboardRemove
+from birthdaybot.localization.localization import Localization
 
-
-ADD_LIST_BUTTON = "Add the list of birthdays"
-SETTINGS_BUTTON = "Settings"
-EDIT_LISTS_BUTTON = "Edit the lists"
-STOP_BOT_BUTTON = "Stop and delete the bot"
+# The keys of the buttons
+ADD_LIST_BUTTON = "ADD_LIST_BUTTON"
+SETTINGS_BUTTON = "SETTINGS_BUTTON"
+EDIT_LISTS_BUTTON = "EDIT_LISTS_BUTTON"
+STOP_BOT_BUTTON = "STOP_BOT_BUTTON"
 
 
 def build_menu(buttons, n_cols=1, header_buttons=None, footer_buttons=None):
@@ -34,11 +35,15 @@ def get_main_menu():
     """
     Creates a KeyboardMarkup for the main menu and returns it.
     """
+
+    # The dict of the menus
+    main_menu = Localization.get_menu(Localization.MAIN_MENU)
+
     button_list = [
-        KeyboardButton(ADD_LIST_BUTTON),
-        KeyboardButton(SETTINGS_BUTTON),
-        KeyboardButton(EDIT_LISTS_BUTTON),
-        KeyboardButton(STOP_BOT_BUTTON)
+        KeyboardButton(main_menu[ADD_LIST_BUTTON]),
+        KeyboardButton(main_menu[SETTINGS_BUTTON]),
+        KeyboardButton(main_menu[EDIT_LISTS_BUTTON]),
+        KeyboardButton(main_menu[STOP_BOT_BUTTON])
     ]
 
     reply_markup = ReplyKeyboardMarkup(build_menu(button_list, n_cols=1))
