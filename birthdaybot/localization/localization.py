@@ -6,58 +6,40 @@ import os
 import json
 
 
-class Localization:
-    LANGUAGE_CODE = 'en'
+def _get_info(filename: str) -> str:
+    """
+    Reads an HTML file and returns its content as a string
 
-    LANGUAGE_DIRECTORY = os.path.join("./localization", LANGUAGE_CODE)
-    INFORMATION_DIRECTORY = os.path.join(LANGUAGE_DIRECTORY, "info")
-    MENU_DIRECTORY = os.path.join(LANGUAGE_DIRECTORY, "menu")
+    :param filename: the filename of an HTML file
+    :return: content of the file
+    """
+    with codecs.open(filename, 'r', 'utf-8') as file:
+        return file.read()
 
-    # Define all the information files
-    START_INFO = os.path.join(INFORMATION_DIRECTORY, "start_info.html")
-    STOP_BOT_INFO = os.path.join(INFORMATION_DIRECTORY, "stop_bot_info.html")
 
-    # Define all the menu files
-    MAIN_MENU = os.path.join(MENU_DIRECTORY, "main.json")
+def _get_menu(filename: str) -> dict:
+    with open(filename) as file:
+        return json.load(file)
 
-    @staticmethod
-    def set_language_code(language_code: str):
-        """
-        This method sets up new language code
 
-        :param language_code:
-        :return:
-        """
-        # Define the language directory containing information in the certain language
-        # TODO: Now just English and Russian are available to use
-        if language_code == "ru":
-            Localization.LANGUAGE_CODE = language_code
-        else:
-            Localization.LANGUAGE_CODE = "en"
+def get_language_code(language_code: str):
+    # Define the language directory containing information in the certain language
+    # TODO: Now just English and Russian are available to use
 
-        Localization.LANGUAGE_DIRECTORY = os.path.join("./localization", Localization.LANGUAGE_CODE)
-        Localization.INFORMATION_DIRECTORY = os.path.join(Localization.LANGUAGE_DIRECTORY, "info")
-        Localization.MENU_DIRECTORY = os.path.join(Localization.LANGUAGE_DIRECTORY, "menu")
+    if language_code == "ru":
+        return language_code
+    else:
+        return "en"
 
-        # Define all the information files
-        Localization.START_INFO = os.path.join(Localization.INFORMATION_DIRECTORY, "start_info.html")
-        Localization.STOP_BOT_INFO = os.path.join(Localization.INFORMATION_DIRECTORY, "stop_bot_info.html")
 
-        # Define all the menu files
-        Localization.MAIN_MENU = os.path.join(Localization.MENU_DIRECTORY, "main.json")
+# Localization files
+def start_info(language_code: str):
+    return _get_info(os.path.join("./localization", get_language_code(language_code), "info", "start_info.html"))
 
-    @staticmethod
-    def get_info(filename: str) -> str:
-        """
-        Reads an HTML file and returns its content as a string
 
-        :param filename: the filename of an HTML file
-        :return: content of the file
-        """
-        with codecs.open(filename, 'r', 'utf-8') as file:
-            return file.read()
+def stop_bot_info(language_code: str):
+    return _get_info(os.path.join("./localization", get_language_code(language_code), "info", "stop_bot_info.html"))
 
-    @staticmethod
-    def get_menu(filename: str) -> dict:
-        with open(filename) as file:
-            return json.load(file)
+
+def main_menu(language_code: str):
+    return _get_menu(os.path.join("./localization", get_language_code(language_code), "menu", "main.json"))
