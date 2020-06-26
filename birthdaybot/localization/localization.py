@@ -43,3 +43,11 @@ def stop_bot_info(language_code: str):
 
 def main_menu(language_code: str):
     return _get_menu(os.path.join("./localization", get_language_code(language_code), "menu", "main.json"))
+
+
+def accept_cancel_menu(language_code: str):
+    return _get_menu(os.path.join("./localization", get_language_code(language_code), "menu", "accept_cancel.json"))
+
+
+def add_lists_info(language_code: str):
+    return _get_info(os.path.join("./localization", get_language_code(language_code), "info", "add_lists_info.html"))
