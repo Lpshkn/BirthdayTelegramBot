@@ -28,9 +28,7 @@ class BirthdayBot:
         conversation_handler = ConversationHandler(
             entry_points=[CommandHandler('start', handlers.start_handler)],
             states={
-                handlers.MAIN_MENU: [
-                    MessageHandler(Filters.text & ~Filters.command, handlers.main_menu_handler)
-                ]
+                handlers.MAIN_MENU: [MessageHandler(Filters.text & ~Filters.command, handlers.main_menu_handler)]
             },
             fallbacks=[CommandHandler('stop', handlers.stop_bot_handler)],
 

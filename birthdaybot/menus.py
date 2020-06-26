@@ -11,6 +11,8 @@ ADD_LIST_BUTTON = "ADD_LIST_BUTTON"
 SETTINGS_BUTTON = "SETTINGS_BUTTON"
 EDIT_LISTS_BUTTON = "EDIT_LISTS_BUTTON"
 STOP_BOT_BUTTON = "STOP_BOT_BUTTON"
+ACCEPT_BUTTON = "ACCEPT"
+CANCEL_BUTTON = "CANCEL"
 
 
 def build_menu(buttons, n_cols=1, header_buttons=None, footer_buttons=None):
@@ -46,7 +48,7 @@ def get_main_menu(language_code: str):
         KeyboardButton(main_menu[STOP_BOT_BUTTON])
     ]
 
-    reply_markup = ReplyKeyboardMarkup(build_menu(button_list, n_cols=1))
+    reply_markup = ReplyKeyboardMarkup(build_menu(button_list, n_cols=1), resize_keyboard=True)
     return reply_markup
 
 
@@ -55,3 +57,15 @@ def remove_keyboard():
     Creates a RemoveMarkup to remove a keyboard of the bot
     """
     return ReplyKeyboardRemove()
+
+
+def accept_cancel_keyboard(language_code: str):
+    accept_cancel = localization.accept_cancel_menu(language_code)
+
+    button_list = [
+        KeyboardButton(accept_cancel[ACCEPT_BUTTON]),
+        KeyboardButton(accept_cancel[CANCEL_BUTTON])
+    ]
+
+    reply_markup = ReplyKeyboardMarkup(build_menu(button_list, n_cols=1), resize_keyboard=True)
+    return reply_markup

@@ -7,7 +7,7 @@ from birthdaybot.localization import localization
 from telegram.ext import Updater
 
 # Define all the states of the bot
-MAIN_MENU = range(1)
+MAIN_MENU, ADD_LISTS = range(2)
 
 
 def start_handler(update: telegram.Update, context: telegram.ext.CallbackContext):
@@ -55,3 +55,11 @@ def main_menu_handler(update: telegram.Update, context: telegram.ext.CallbackCon
                                 disable_web_page_preview=True,
                                 reply_markup=menus.remove_keyboard())
         return telegram.ext.ConversationHandler.END
+
+    elif text == main_menu[menus.ADD_LIST_BUTTON]:
+        context.bot.sendMessage(chat_id=update.effective_chat.id,
+                                text=localization.add_lists_info(code),
+                                parse_mode=telegram.ParseMode.HTML,
+                                disable_web_page_preview=True,
+                                reply_markup=menus.accept_cancel_keyboard(code))
+        return ADD_LISTS
