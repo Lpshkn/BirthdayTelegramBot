@@ -1,0 +1,7 @@
+{
+  "PG_USER": "USERNAME",
+  "PG_PSWD": "PASSWORD",
+  "PG_HOST":  "HOST",
+  "PG_PORT": "PORT",
+  "PG_NAME":  "NAME"
+}
