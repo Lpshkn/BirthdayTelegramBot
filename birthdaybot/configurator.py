@@ -2,10 +2,14 @@
 This module represents a configurator which will set any configurations,
 get and process the parameters received from the command line
 """
+import os
+import json
 from argparse import ArgumentParser
 
 
 class Configurator:
+    CONFIG_DIRECTORY = os.path.join(os.path.dirname(os.path.dirname(__file__)), "config")
+
     def __init__(self, args):
         # Set descriptions of the program
         description = "This is a bot which will unobtrusively remind users about their friends' birthday!"
@@ -31,10 +35,6 @@ class Configurator:
 
         parser.add_argument('token',
                             help='The token to work with the bot.',
-                            type=str)
-
-        parser.add_argument('-p', '--persistence',
-                            help='File to save conversation states, user/bot data etc. there',
                             type=str)
 
         return parser
@@ -66,4 +66,16 @@ class Configurator:
         :return: filename
         """
 
-        return self._parameters.persistence
+        return os.path.join(self.CONFIG_DIRECTORY, "persistence.pickle")
+
+    def get_dbconfig(self) -> dict:
+        """
+        Returns a json object from a file containing configurations
+
+        :return: dictionary
+        """
+        try:
+            with open(os.path.join(self.CONFIG_DIRECTORY, "config.json"), "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {}
