@@ -131,4 +131,4 @@ dmypy.json
 .idea
 
 # Project config files
-persistence
+persistence.pickle
