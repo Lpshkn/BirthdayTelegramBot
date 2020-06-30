@@ -54,3 +54,20 @@ class Database:
                         "note_id integer CONSTRAINT notes_pkey PRIMARY KEY,"
                         "chat_id integer REFERENCES Chats ON DELETE CASCADE ON UPDATE CASCADE,"
                         "datetime timestamp(0) NOT NULL UNIQUE);")
+
+    def add_chats(self, conversations: dict, name: str = None):
+        """
+        Method to add chat_ids into the database.
+
+        :param conversations: a dictionary containing chat_id and conversation state
+        :param name: the name of a Conversation handler
+        """
+        if not name:
+            name = "main_menu_state"
+
+        with self.connection.cursor() as cur:
+            for key in conversations[name].keys():
+                chat_id = key[0]
+                query = sql.SQL("INSERT INTO chats(chat_id) VALUES ({0})"
+                                "ON CONFLICT (chat_id) DO NOTHING").format(sql.Literal(chat_id))
+                cur.execute(query)
