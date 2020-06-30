@@ -99,3 +99,20 @@ class Database:
                 query = sql.SQL("INSERT INTO chats(chat_id) VALUES ({0})"
                                 "ON CONFLICT (chat_id) DO NOTHING").format(sql.Literal(chat_id))
                 cur.execute(query)
+
+    def get_conversation(self, name: str) -> dict:
+        """
+        Method gets conversation states from the database.
+
+        This method returns a dictionary consisting of a tuple and a state of the handler.
+        The tuple contains the chat_id. It returns a tuple because of the handler requires it and besides the chat_id,
+        the user_id and the message_id may be passed. But now it isn't required and just user_id will be sent.
+        This fact may be changed in the ConversationHandler constructor (parameters per_chat, per_user, per_message)
+
+        :param name: the name of a Conversation handler
+        :return: dictionary
+        """
+        with self.connection.cursor() as cur:
+            query = sql.SQL("SELECT chat_id, {} FROM conversations").format(sql.Identifier(name))
+            cur.execute(query)
+            return {(chat_id,): state for (chat_id, state) in cur.fetchall()}
