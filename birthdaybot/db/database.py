@@ -1,25 +1,31 @@
+"""
+This module implements the database interaction and other methods to provide getting data easier.
+"""
 import psycopg2
 import sys
+from psycopg2 import sql
 
 
 class Database:
     def __init__(self, json_obj):
-        self.name = json_obj["PG_NAME"]
-        self.user = json_obj["PG_USER"]
-        self.password = json_obj["PG_PSWD"]
-        self.host = json_obj["PG_HOST"]
-        self.port = json_obj["PG_PORT"]
+        self._name = json_obj["PG_NAME"]
+        self._user = json_obj["PG_USER"]
+        self._password = json_obj["PG_PSWD"]
+        self._host = json_obj["PG_HOST"]
+        self._port = json_obj["PG_PORT"]
 
-        self.connection = self.connect()
-        self.create_tables()
+        self.connection = self._connect()
+        self.connection.autocommit = True
 
-    def connect(self):
+        self._create_tables()
+
+    def _connect(self):
         try:
-            connection = psycopg2.connect(database=self.name,
-                                          user=self.user,
-                                          password=self.password,
-                                          host=self.host,
-                                          port=self.port)
+            connection = psycopg2.connect(database=self._name,
+                                          user=self._user,
+                                          password=self._password,
+                                          host=self._host,
+                                          port=self._port)
 
             return connection
         except psycopg2.OperationalError as e:
