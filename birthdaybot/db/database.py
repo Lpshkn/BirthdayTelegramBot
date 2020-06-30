@@ -32,13 +32,18 @@ class Database:
             print("Error: {}".format(e), file=sys.stderr)
             exit(-2)
 
-    def create_tables(self):
+    def _create_tables(self):
+        """
+        Creates tables if they don't exist.
+        """
         with self.connection.cursor() as cur:
-            self.connection.autocommit = True
-
             cur.execute("CREATE TABLE IF NOT EXISTS Chats ("
-                        "chat_id integer CONSTRAINT chats_pkey PRIMARY KEY,"
-                        "conversation_state varchar(64) NOT NULL);")
+                        "chat_id integer CONSTRAINT chats_pkey PRIMARY KEY);")
+
+            cur.execute("CREATE TABLE IF NOT EXISTS Conversations ("
+                        "chat_id integer CONSTRAINT conversations_pkey PRIMARY KEY REFERENCES chats "
+                        "ON DELETE CASCADE ON UPDATE CASCADE,"
+                        "main_menu_state integer NULL);")
 
             cur.execute("CREATE TABLE IF NOT EXISTS Users ("
                         "user_id integer CONSTRAINT users_pkey PRIMARY KEY,"
