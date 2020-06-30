@@ -8,6 +8,7 @@ import psycopg2
 
 def main():
     configurator = Configurator(sys.argv[1:])
+    database = None
 
     try:
         database = Database(configurator.get_dbconfig())
@@ -15,7 +16,7 @@ def main():
         print("Error: Undefined parameter {}".format(e), file=sys.stderr)
         exit(-1)
 
-    bot = BirthdayBot(configurator.get_token(), configurator.get_persistence())
+    bot = BirthdayBot(configurator.get_token(), database, configurator.get_persistence())
     bot.run()
 
 
