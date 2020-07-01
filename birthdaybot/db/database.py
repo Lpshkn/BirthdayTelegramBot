@@ -37,8 +37,20 @@ class Database:
         Creates tables if they don't exist.
         """
         with self.connection.cursor() as cur:
+            # Create the enum for the type of a chat
+            cur.execute("DO $$ "
+                        "BEGIN "
+                        "IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'chat_type') THEN "
+                        "CREATE TYPE chat_type AS ENUM ('private', 'group', 'channel', 'supergroup'); "
+                        "END IF; "
+                        "END $$;")
+
             cur.execute("CREATE TABLE IF NOT EXISTS Chats ("
-                        "chat_id integer CONSTRAINT chats_pkey PRIMARY KEY);")
+                        "chat_id integer CONSTRAINT chats_pkey PRIMARY KEY,"
+                        "title varchar(256),"
+                        "description varchar(256),"
+                        "photo varchar(1000),"
+                        "type chat_type);")
 
             cur.execute("CREATE TABLE IF NOT EXISTS Conversations ("
                         "chat_id integer CONSTRAINT conversations_pkey PRIMARY KEY REFERENCES chats "
@@ -48,7 +60,11 @@ class Database:
             cur.execute("CREATE TABLE IF NOT EXISTS Users ("
                         "user_id integer CONSTRAINT users_pkey PRIMARY KEY,"
                         "chat_id integer REFERENCES Chats ON DELETE SET NULL ON UPDATE CASCADE,"
-                        "username varchar(32) NOT NULL UNIQUE);")
+                        "username varchar(32),"
+                        "first_name varchar(256),"
+                        "last_name varchar(256),"
+                        "is_bot boolean,"
+                        "language_code varchar(10) DEFAULT 'en');")
 
             cur.execute("CREATE TABLE IF NOT EXISTS Notes ("
                         "note_id integer CONSTRAINT notes_pkey PRIMARY KEY,"
