@@ -62,7 +62,19 @@ class BotPersistence(BasePersistence):
         pass
 
     def update_chat_data(self, chat_id, data):
-        pass
+        """
+        Will update the chat_data (if changed) and save the data into the database.
+
+        :param chat_id: The chat the data might have been changed for.
+        :param data: The :attr:`telegram.ext.dispatcher.chat_data` [chat_id].
+        """
+        if self.chat_data is None:
+            self.chat_data = defaultdict(dict)
+        if self.chat_data.get(chat_id) == data:
+            return
+        self.chat_data[chat_id] = data
+        if not self.on_flush:
+            self.database.update_chat_data(self.chat_data)
 
     def update_user_data(self, user_id, data):
         pass
@@ -89,7 +101,7 @@ class BotPersistence(BasePersistence):
         if self.user_data:
             pass
         if self.chat_data:
-            pass
+            self.database.update_chat_data(self.chat_data)
         if self.bot_data:
             pass
         if self.conversations:
