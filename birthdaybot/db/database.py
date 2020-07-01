@@ -2,6 +2,7 @@
 This module implements the database interaction and other methods to provide getting data easier.
 """
 import psycopg2
+import logging
 import sys
 from psycopg2 import sql
 
@@ -132,3 +133,30 @@ class Database:
             query = sql.SQL("SELECT chat_id, {} FROM conversations").format(sql.Identifier(name))
             cur.execute(query)
             return {(chat_id,): state for (chat_id, state) in cur.fetchall()}
+
+    def get_chat_data(self) -> dict:
+        """
+        Method to getting chat_data from the database.
+        Returns dictionary containing the chat_id and a list of arguments.
+
+        :return: dictionary
+        """
+        with self.connection.cursor() as cur:
+            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'chats';")
+            columns = [column[0] for column in cur.fetchall()]
+
+            if not columns:
+                logging.warning("The names of columns from the Chats table weren't received")
+                return {}
+
+            # Get all data and create a dictionary
+            cur.execute("SELECT * FROM chats")
+            chats_data = cur.fetchall()
+            if chats_data:
+                return {chat[0]: {columns[i]: chat[i] for i in range(1, len(columns))} for chat in chats_data}
+            else:
+                return {}
+
+    def update_chat_data(self, chat_data: dict):
+        pass
+
