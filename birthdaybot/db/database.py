@@ -158,5 +158,30 @@ class Database:
                 return {}
 
     def update_chat_data(self, chat_data: dict):
-        pass
+        """
+        Method updates the data of the database (if it was changed).
+
+        :param chat_data: a new data
+        """
+        if chat_data:
+            for chat_id, data_dict in chat_data.items():
+                with self.connection.cursor() as cur:
+                    # Get the columns names and create a list of the data
+                    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'chats';")
+                    columns = [column[0] for column in cur.fetchall()]
+                    data = [chat_id]
+                    data.extend(data_dict[key] for key in columns[1:])
+
+                    if not columns:
+                        logging.warning("The names of columns from the Chats table weren't received")
+                        return {}
+
+                    query = sql.SQL("INSERT INTO chats(chat_id, title, description, photo, type) "
+                                    "VALUES ({}) "
+                                    "ON CONFLICT (chat_id) DO UPDATE SET "
+                                    "title = excluded.title, description = excluded.description,"
+                                    "photo = excluded.photo, type = excluded.type").format(
+                        sql.SQL(',').join(map(sql.Literal, data)))
+
+                    cur.execute(query)
 
