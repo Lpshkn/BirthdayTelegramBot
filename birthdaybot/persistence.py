@@ -3,6 +3,8 @@ This method implements the inheritance from the BasePersistence class to provide
 """
 from birthdaybot.db.database import Database
 from telegram.ext import BasePersistence
+from collections import defaultdict
+from copy import deepcopy
 
 
 class BotPersistence(BasePersistence):
@@ -24,8 +26,23 @@ class BotPersistence(BasePersistence):
     def get_user_data(self):
         pass
 
-    def get_chat_data(self):
-        pass
+    def get_chat_data(self) -> dict:
+        """
+        Returns the chat_data from the database.
+
+        :return: The restored chat data.
+        """
+        if self.chat_data:
+            pass
+        else:
+            data = self.database.get_chat_data()
+            if not data:
+                data = defaultdict(dict)
+            else:
+                data = defaultdict(dict, data)
+            self.chat_data = data
+
+        return deepcopy(self.chat_data)
 
     def get_bot_data(self):
         pass
