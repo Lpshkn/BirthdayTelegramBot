@@ -14,12 +14,18 @@ def start_handler(update: telegram.Update, context: telegram.ext.CallbackContext
     """
     The handler to /start command. This handler send an localization message to the user.
     """
+    chat_id = update.effective_chat.id
     code = update.effective_user.language_code
-    context.bot.sendMessage(chat_id=update.effective_chat.id,
+    context.bot.sendMessage(chat_id=chat_id,
                             text=localization.start_info(code),
                             parse_mode=telegram.ParseMode.HTML,
                             disable_web_page_preview=True,
                             reply_markup=menus.get_main_menu(code))
+
+    context.chat_data['title'] = update.effective_chat.title
+    context.chat_data['description'] = update.effective_chat.description
+    context.chat_data['photo'] = update.effective_chat.photo
+    context.chat_data['type'] = update.effective_chat.type
 
     return MAIN_MENU
 
