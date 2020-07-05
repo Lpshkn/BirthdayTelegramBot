@@ -199,7 +199,7 @@ class Database:
 
                     # Build a list containing all values of this id
                     values = [id]
-                    values.extend(data[id][column] for column in columns[1:])
+                    values.extend(data[id].get(column) for column in columns[1:])
 
                     if not columns:
                         logging.warning("The names of columns from the {} table weren't received".format(table_name))
