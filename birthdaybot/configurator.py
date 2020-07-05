@@ -59,15 +59,6 @@ class Configurator:
 
         return self._parameters.token
 
-    def get_persistence(self) -> str:
-        """
-        Returns the name of a file where the states of a conversation or data/user data will be saved
-
-        :return: filename
-        """
-
-        return os.path.join(self.CONFIG_DIRECTORY, "persistence.pickle")
-
     def get_dbconfig(self) -> dict:
         """
         Returns a json object from a file containing configurations
