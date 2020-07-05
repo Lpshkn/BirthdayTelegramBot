@@ -141,8 +141,29 @@ class Database:
 
         :return: dictionary
         """
+        return self.get_data("chats")
+
+    def get_user_data(self) -> dict:
+        """
+        Method to getting user_data from the database.
+        Returns dictionary containing the user_id and a list of arguments.
+
+        :return: dictionary
+        """
+        return self.get_data("users")
+
+    def get_data(self, table_name: str) -> dict:
+        """
+        Method builds a query to get all data from the table of the database.
+
+        :param table_name: the name of a table
+        :return: dictionary containing id and a list of arguments
+        """
         with self.connection.cursor() as cur:
-            cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'chats';")
+            query = sql.SQL("SELECT column_name FROM information_schema.columns WHERE table_name = {};").format(
+                sql.Literal(table_name))
+            cur.execute(query)
+
             columns = [column[0] for column in cur.fetchall()]
 
             if not columns:
@@ -150,10 +171,12 @@ class Database:
                 return {}
 
             # Get all data and create a dictionary
-            cur.execute("SELECT * FROM chats")
-            chats_data = cur.fetchall()
-            if chats_data:
-                return {chat[0]: {columns[i]: chat[i] for i in range(1, len(columns))} for chat in chats_data}
+            query = sql.SQL("SELECT * FROM {}").format(sql.Identifier(table_name))
+            cur.execute(query)
+            data = cur.fetchall()
+
+            if data:
+                return {row[0]: {columns[i]: row[i] for i in range(1, len(columns))} for row in data}
             else:
                 return {}
 
