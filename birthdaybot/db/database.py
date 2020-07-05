@@ -180,31 +180,60 @@ class Database:
             else:
                 return {}
 
+    def update_data(self, table_name: str, data: dict):
+        """
+        Method builds a query to update all data of the table of the database.
+
+        :param table_name: the name of a table
+        :param data: dictionary containing ids and a list of arguments with it
+        """
+        if data:
+            # Iterate through all ids
+            for id, data_dict in data.items():
+                with self.connection.cursor() as cur:
+                    # Get all the names of the columns of the table
+                    query = sql.SQL("SELECT column_name FROM information_schema.columns WHERE table_name = {};").format(
+                        sql.Literal(table_name))
+                    cur.execute(query)
+                    columns = [column[0] for column in cur.fetchall()]
+
+                    # Build a list containing all values of this id
+                    values = [id]
+                    values.extend(data[id][column] for column in columns[1:])
+
+                    if not columns:
+                        logging.warning("The names of columns from the {} table weren't received".format(table_name))
+                        return {}
+
+                    # Build the SQL-string to use "UPSERT" function
+                    setting_columns = list(map(lambda x: sql.SQL("{0} = excluded.{0}").format(sql.Identifier(x)), columns[1:]))
+
+                    # Build a query
+                    query = sql.SQL("INSERT INTO {0}({1}) "
+                                    "VALUES ({2}) "
+                                    "ON CONFLICT ({3}) DO UPDATE SET "
+                                    "{4}").format(
+                        sql.Identifier(table_name),
+                        sql.SQL(',').join(map(sql.Identifier, columns)),
+                        sql.SQL(',').join(map(sql.Literal, values)),
+                        sql.Identifier(columns[0]),
+                        sql.SQL(',').join(setting_columns))
+                    cur.execute(query)
+
     def update_chat_data(self, chat_data: dict):
         """
         Method updates the data of the database (if it was changed).
 
         :param chat_data: a new data
         """
-        if chat_data:
-            for chat_id, data_dict in chat_data.items():
-                with self.connection.cursor() as cur:
-                    # Get the columns names and create a list of the data
-                    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'chats';")
-                    columns = [column[0] for column in cur.fetchall()]
-                    data = [chat_id]
-                    data.extend(data_dict[key] for key in columns[1:])
+        self.update_data('chats', chat_data)
 
-                    if not columns:
-                        logging.warning("The names of columns from the Chats table weren't received")
-                        return {}
+    def update_user_data(self, user_data: dict):
+        """
 
-                    query = sql.SQL("INSERT INTO chats(chat_id, title, description, photo, type) "
-                                    "VALUES ({}) "
-                                    "ON CONFLICT (chat_id) DO UPDATE SET "
-                                    "title = excluded.title, description = excluded.description,"
-                                    "photo = excluded.photo, type = excluded.type").format(
-                        sql.SQL(',').join(map(sql.Literal, data)))
+        :param user_data:
+        :return:
+        """
+        self.update_data('users', user_data)
 
-                    cur.execute(query)
 
