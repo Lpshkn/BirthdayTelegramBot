@@ -24,7 +24,21 @@ class BotPersistence(BasePersistence):
         self.conversations = None
 
     def get_user_data(self):
-        pass
+        """Returns the user_data from the pickle file if it exsists or an empty defaultdict.
+        Returns:
+            :obj:`defaultdict`: The restored user data.
+        """
+        if self.user_data:
+            pass
+        else:
+            data = self.database.get_user_data()
+            if not data:
+                data = defaultdict(dict)
+            else:
+                data = defaultdict(dict, data)
+            self.user_data = data
+
+        return deepcopy(self.user_data)
 
     def get_chat_data(self) -> dict:
         """
@@ -44,9 +58,6 @@ class BotPersistence(BasePersistence):
 
         return deepcopy(self.chat_data)
 
-    def get_bot_data(self):
-        pass
-
     def get_conversations(self, name):
         if self.conversations:
             pass
@@ -57,9 +68,6 @@ class BotPersistence(BasePersistence):
             self.conversations = data
 
         return self.conversations.copy()
-
-    def update_bot_data(self, data):
-        pass
 
     def update_chat_data(self, chat_id, data):
         """
@@ -77,7 +85,20 @@ class BotPersistence(BasePersistence):
             self.database.update_chat_data(self.chat_data)
 
     def update_user_data(self, user_id, data):
-        pass
+        """Will update the user_data (if changed) and depending on :attr:`on_flush` save the
+        pickle file.
+
+        Args:
+            user_id (:obj:`int`): The user the data might have been changed for.
+            data (:obj:`dict`): The :attr:`telegram.ext.dispatcher.user_data` [user_id].
+        """
+        if self.user_data is None:
+            self.user_data = defaultdict(dict)
+        if self.user_data.get(user_id) == data:
+            return
+        self.user_data[user_id] = data
+        if not self.on_flush:
+            self.database.update_user_data(self.user_data)
 
     def update_conversation(self, name: str, key: tuple, new_state: int):
         """
@@ -109,3 +130,8 @@ class BotPersistence(BasePersistence):
 
         self.database.connection.close()
 
+    def update_bot_data(self, data):
+        pass
+
+    def get_bot_data(self):
+        pass
