@@ -16,7 +16,7 @@ def main():
         print("Error: Undefined parameter {}".format(e), file=sys.stderr)
         exit(-1)
 
-    bot = BirthdayBot(configurator.get_token(), database, configurator.get_persistence())
+    bot = BirthdayBot(configurator.get_token(), database)
     bot.run()
 
 

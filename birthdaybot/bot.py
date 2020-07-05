@@ -3,6 +3,8 @@ Module for all the actions with the Bot
 """
 import birthdaybot.handlers as handlers
 import logging
+from birthdaybot.persistence import BotPersistence
+from birthdaybot.db.database import Database
 from telegram.ext import Updater, CommandHandler, ConversationHandler, MessageHandler, Filters, PicklePersistence
 
 
@@ -11,13 +13,10 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 
 class BirthdayBot:
-    def __init__(self, token: str, persistence_filename: str = None):
-        if persistence_filename:
-            persistence = PicklePersistence(persistence_filename)
-        else:
-            logging.warning("There is no persistence file to save the states of a conversation or any data!")
-            persistence = None
+    def __init__(self, token: str, database: Database):
+        persistence = BotPersistence(database, store_bot_data=False)
 
+        self.database = database
         self.updater = Updater(token=token, use_context=True, persistence=persistence)
         self.dispatcher = self.updater.dispatcher
 
@@ -32,8 +31,9 @@ class BirthdayBot:
             },
             fallbacks=[CommandHandler('stop', handlers.stop_bot_handler)],
 
-            name="main_conversation",
-            persistent=True
+            name="main_menu_state",
+            persistent=True,
+            per_user=False
         )
         self.dispatcher.add_handler(conversation_handler)
 
