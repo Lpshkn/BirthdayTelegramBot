@@ -222,7 +222,7 @@ class Database:
 
     def update_chat_data(self, chat_data: dict):
         """
-        Method updates the data of the database (if it was changed).
+        Method updates the data of chats in the database (if it was changed).
 
         :param chat_data: a new data
         """
@@ -230,6 +230,7 @@ class Database:
 
     def update_user_data(self, user_data: dict):
         """
+        Method updates the data of users in the database (if it was changed).
 
         :param user_data:
         :return:
