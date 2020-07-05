@@ -27,6 +27,13 @@ def start_handler(update: telegram.Update, context: telegram.ext.CallbackContext
     context.chat_data['photo'] = update.effective_chat.photo
     context.chat_data['type'] = update.effective_chat.type
 
+    context.user_data['chat_id'] = chat_id
+    context.user_data['username'] = update.effective_user.username
+    context.user_data['first_name'] = update.effective_user.first_name
+    context.user_data['last_name'] = update.effective_user.last_name
+    context.user_data['is_bot'] = update.effective_user.is_bot
+    context.user_data['language_code'] = update.effective_user.language_code
+
     return MAIN_MENU
 
 
