@@ -22,19 +22,32 @@ def start_handler(update: telegram.Update, context: telegram.ext.CallbackContext
                             disable_web_page_preview=True,
                             reply_markup=menus.get_main_menu(code))
 
+    update_chat_data(update, context)
+    update_user_data(update, context)
+
+    return MAIN_MENU
+
+
+def update_chat_data(update: telegram.Update, context: telegram.ext.CallbackContext):
+    """
+    Function to update the chat_data receiving from the user.
+    """
     context.chat_data['title'] = update.effective_chat.title
     context.chat_data['description'] = update.effective_chat.description
     context.chat_data['photo'] = update.effective_chat.photo
     context.chat_data['type'] = update.effective_chat.type
 
-    context.user_data['chat_id'] = chat_id
+
+def update_user_data(update: telegram.Update, context: telegram.ext.CallbackContext):
+    """
+    Function to update the user_data receiving from the user.
+    """
+    context.user_data['chat_id'] = update.effective_chat.id
     context.user_data['username'] = update.effective_user.username
     context.user_data['first_name'] = update.effective_user.first_name
     context.user_data['last_name'] = update.effective_user.last_name
     context.user_data['is_bot'] = update.effective_user.is_bot
     context.user_data['language_code'] = update.effective_user.language_code
-
-    return MAIN_MENU
 
 
 def stop_bot_handler(update: telegram.Update, context: telegram.ext.CallbackContext):
