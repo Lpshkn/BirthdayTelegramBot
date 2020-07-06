@@ -4,8 +4,9 @@ Module for all the handlers which will be processed by the ConversationHandler
 import re
 import telegram
 import birthdaybot.menus as menus
-from birthdaybot.localization import localization
+from birthdaybot.localization import localization, date
 from telegram.ext import Updater
+from datetime import datetime
 
 # Define all the states of the bot
 MAIN_MENU, ADD_LISTS = range(2)
@@ -92,25 +93,42 @@ def main_menu_handler(update: telegram.Update, context: telegram.ext.CallbackCon
         return ADD_LISTS
 
 
-def process_entries(text: str, update: telegram.Update, context: telegram.ext.CallbackContext) -> list:
+def process_entries(text: str, update: telegram.Update, context: telegram.ext.CallbackContext) -> set:
     """
     Method processes the text received from the user and checks that entries are correct.
     This method will be called by add_lists_handler that processes adding new lists of entries.
 
     Returns a list of tuples that contain the name of an entry and the date.
     """
-    incorrect_lines = []
-    for line in text.splitlines():
-        if not re.match(
-                r"^[\w ]+ *- *((0?[1-9])|([1-2][0-9])|(3[0-1]))(( [а-яА-Яa-zA-Z]{3,9})|([./]((0?[1-9])|(1[0-2]))))$",
-                line, re.IGNORECASE):
-            incorrect_lines.append(line)
-        else:
-            pass
+    language_code = update.effective_user.language_code if update.effective_user.language_code == 'ru' else 'en'
 
+    incorrect_lines = set()
+    entries = set()
+    for line in text.splitlines():
+        # Check the line matches the pattern
+        if not re.match(
+                r"^[\w ]+ *- *((0?[1-9])|([1-2][0-9])|(3[0-1]))(( +[а-яА-Яa-zA-Z]{3,9})|([./]((0?[1-9])|(1[0-2]))))$",
+                line, re.IGNORECASE):
+            incorrect_lines.add(line)
+        else:
+            # Get the name and the date of an entry
+            name, date_entry = [x.strip() for x in line.split('-')]
+            day, month = re.split(r'[ ./]+', date_entry, maxsplit=1)
+            if re.match(r'^[a-zA-Zа-яА-Я]+$', month):
+                month = date.MONTHS[language_code].get(month, 0)
+
+            # A day or a month may be incorrect
+            try:
+                date_entry = datetime.strptime("{} {}".format(day, month), "%d %m")
+                entries.add((name, date_entry))
+            except ValueError:
+                incorrect_lines.add(line)
+
+    # Send incorrect lines to the user
     if incorrect_lines:
         chat_id = update.effective_chat.id
         code = update.effective_user.language_code
         context.bot.sendMessage(chat_id=chat_id,
                                 text=localization.error_adding_entry(code).format('\n'.join(incorrect_lines)),
                                 parse_mode=telegram.ParseMode.HTML)
+    return entries
