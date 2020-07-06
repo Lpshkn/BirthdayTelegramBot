@@ -51,3 +51,7 @@ def accept_cancel_menu(language_code: str):
 
 def add_lists_info(language_code: str):
     return _get_info(os.path.join("./localization", get_language_code(language_code), "info", "add_lists_info.html"))
+
+
+def error_adding_entry(language_code: str):
+    return _get_info(os.path.join("./localization", get_language_code(language_code), "info", "error_adding_entry.html"))
