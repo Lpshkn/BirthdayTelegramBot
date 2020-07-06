@@ -1,6 +1,7 @@
 """
 Module for all the handlers which will be processed by the ConversationHandler
 """
+import re
 import telegram
 import birthdaybot.menus as menus
 from birthdaybot.localization import localization
@@ -89,3 +90,27 @@ def main_menu_handler(update: telegram.Update, context: telegram.ext.CallbackCon
                                 disable_web_page_preview=True,
                                 reply_markup=menus.accept_cancel_keyboard(code))
         return ADD_LISTS
+
+
+def process_entries(text: str, update: telegram.Update, context: telegram.ext.CallbackContext) -> list:
+    """
+    Method processes the text received from the user and checks that entries are correct.
+    This method will be called by add_lists_handler that processes adding new lists of entries.
+
+    Returns a list of tuples that contain the name of an entry and the date.
+    """
+    incorrect_lines = []
+    for line in text.splitlines():
+        if not re.match(
+                r"^[\w ]+ *- *((0?[1-9])|([1-2][0-9])|(3[0-1]))(( [а-яА-Яa-zA-Z]{3,9})|([./]((0?[1-9])|(1[0-2]))))$",
+                line, re.IGNORECASE):
+            incorrect_lines.append(line)
+        else:
+            pass
+
+    if incorrect_lines:
+        chat_id = update.effective_chat.id
+        code = update.effective_user.language_code
+        context.bot.sendMessage(chat_id=chat_id,
+                                text=localization.error_adding_entry(code).format('\n'.join(incorrect_lines)),
+                                parse_mode=telegram.ParseMode.HTML)
