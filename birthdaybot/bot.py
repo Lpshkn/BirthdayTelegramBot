@@ -55,10 +55,22 @@ class BirthdayBot:
         # Get the text of the message and compare it with the name of buttons
         text = update.message.text
 
+        # If the user pressed the 'Cancel' button
         if text == accept_cancel_menu[menus.CANCEL_BUTTON]:
-            pass
+            # Remove the list of entries
+            if chat_id in self.entries:
+                self.entries.pop(chat_id)
+            context.bot.sendMessage(chat_id=chat_id,
+                                    text=localization.cancel(code),
+                                    reply_markup=menus.get_main_menu(code))
+            return handlers.MAIN_MENU
+
+        # If the user pressed the 'Accept' button
         elif text == accept_cancel_menu[menus.ACCEPT_BUTTON]:
             pass
+
+        # If the user sends a message
         else:
             entries = handlers.process_entries(text, update, context)
-            self.entries.setdefault(chat_id, []).extend(entries)
+            self.entries.setdefault(chat_id, set())
+            self.entries[chat_id] |= entries
