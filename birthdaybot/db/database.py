@@ -239,4 +239,24 @@ class Database:
         """
         self.update_data('users', user_data)
 
+    def add_entries(self, chat_id: int, entries: set):
+        """
+        Method adds new entries into the database. The method gets recall time from the other table and set this time
+        into the notes table. This datetime will be compared with the date and the time at the moment.
 
+        :param chat_id: the id of the chat
+        :param entries: the set that contains tuples containing the name and the date of an entry
+        """
+        # Get recall time from the chats table for this chat_id
+        with self.connection.cursor() as cur:
+            query = sql.SQL("SELECT time_recall FROM chats WHERE chat_id = {}").format(sql.Literal(chat_id))
+            cur.execute(query)
+            time_recall = cur.fetchone()[0]
+
+        for name, entry_date in entries:
+            with self.connection.cursor() as cur:
+                entry_date = str(entry_date.date()) + ' ' + str(time_recall)
+                query = sql.SQL("INSERT INTO notes(chat_id, name, datetime) VALUES ({0}, {1}, {2})"
+                                "ON CONFLICT (chat_id, name) DO UPDATE SET datetime = excluded.datetime").format(
+                    sql.Literal(chat_id), sql.Literal(name), sql.Literal(entry_date))
+                cur.execute(query)
