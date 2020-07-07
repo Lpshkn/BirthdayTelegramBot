@@ -59,3 +59,7 @@ def error_adding_entry(language_code: str):
 
 def cancel(language_code: str):
     return _get_info(os.path.join("./localization", get_language_code(language_code), "info", "cancel.html"))
+
+
+def accept(language_code: str):
+    return _get_info(os.path.join("./localization", get_language_code(language_code), "info", "accept.html"))
