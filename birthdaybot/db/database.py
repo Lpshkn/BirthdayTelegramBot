@@ -51,7 +51,8 @@ class Database:
                         "title varchar(256),"
                         "description varchar(256),"
                         "photo varchar(1000),"
-                        "type chat_type);")
+                        "type chat_type,"
+                        "time_recall time NOT NULL DEFAULT '12:00');")
 
             cur.execute("CREATE TABLE IF NOT EXISTS Conversations ("
                         "chat_id integer CONSTRAINT conversations_pkey PRIMARY KEY REFERENCES chats "
@@ -68,9 +69,10 @@ class Database:
                         "language_code varchar(10) DEFAULT 'en');")
 
             cur.execute("CREATE TABLE IF NOT EXISTS Notes ("
-                        "note_id integer CONSTRAINT notes_pkey PRIMARY KEY,"
                         "chat_id integer REFERENCES Chats ON DELETE CASCADE ON UPDATE CASCADE,"
-                        "datetime timestamp(0) NOT NULL UNIQUE);")
+                        "name varchar(4096) NOT NULL UNIQUE,"
+                        "datetime timestamp(0) NOT NULL,"
+                        "CONSTRAINT notes_pkey PRIMARY KEY(chat_id, name));")
 
     def update_conversation(self, conversations: dict, name: str = None, key: tuple = None):
         """
@@ -195,7 +197,7 @@ class Database:
                     query = sql.SQL("SELECT column_name FROM information_schema.columns WHERE table_name = {};").format(
                         sql.Literal(table_name))
                     cur.execute(query)
-                    columns = [column[0] for column in cur.fetchall()]
+                    columns = [column[0] for column in cur.fetchall() if column[0] in data[id] or 'id' in column[0]]
 
                     # Build a list containing all values of this id
                     values = [id]
