@@ -67,7 +67,15 @@ class BirthdayBot:
 
         # If the user pressed the 'Accept' button
         elif text == accept_cancel_menu[menus.ACCEPT_BUTTON]:
-            pass
+            # Add new entries into the database and clear the list
+            if chat_id in self.entries:
+                self.database.add_entries(chat_id, self.entries[chat_id])
+                self.entries.pop(chat_id)
+
+            context.bot.sendMessage(chat_id=chat_id,
+                                    text=localization.accept(code),
+                                    reply_markup=menus.get_main_menu(code))
+            return handlers.MAIN_MENU
 
         # If the user sends a message
         else:
