@@ -5,6 +5,7 @@ import psycopg2
 import logging
 import sys
 from psycopg2 import sql
+from datetime import datetime
 
 
 class Database:
@@ -52,7 +53,7 @@ class Database:
                         "description varchar(256),"
                         "photo varchar(1000),"
                         "type chat_type,"
-                        "time_recall time NOT NULL DEFAULT '12:00');")
+                        "time_recall timetz NOT NULL DEFAULT '12:00 MSK');")
 
             cur.execute("CREATE TABLE IF NOT EXISTS Conversations ("
                         "chat_id integer CONSTRAINT conversations_pkey PRIMARY KEY REFERENCES chats "
@@ -71,7 +72,7 @@ class Database:
             cur.execute("CREATE TABLE IF NOT EXISTS Notes ("
                         "chat_id integer REFERENCES Chats ON DELETE CASCADE ON UPDATE CASCADE,"
                         "name varchar(4096) NOT NULL UNIQUE,"
-                        "datetime timestamp(0) NOT NULL,"
+                        "datetime timestamptz(0) NOT NULL,"
                         "CONSTRAINT notes_pkey PRIMARY KEY(chat_id, name));")
 
     def update_conversation(self, conversations: dict, name: str = None, key: tuple = None):
@@ -208,7 +209,8 @@ class Database:
                         return {}
 
                     # Build the SQL-string to use "UPSERT" function
-                    setting_columns = list(map(lambda x: sql.SQL("{0} = excluded.{0}").format(sql.Identifier(x)), columns[1:]))
+                    setting_columns = list(
+                        map(lambda x: sql.SQL("{0} = excluded.{0}").format(sql.Identifier(x)), columns[1:]))
 
                     # Build a query
                     query = sql.SQL("INSERT INTO {0}({1}) "
@@ -260,3 +262,21 @@ class Database:
                                 "ON CONFLICT (chat_id, name) DO UPDATE SET datetime = excluded.datetime").format(
                     sql.Literal(chat_id), sql.Literal(name), sql.Literal(entry_date))
                 cur.execute(query)
+
+    def get_entries(self, start_time: datetime, finish_time: datetime) -> list:
+        """
+        This method gets all entries from the notes table and returns these values + language_code of a user.
+        Method gets entries having the datetime value is during the specific period (from start_time to finish_time).
+
+        :param start_time: the start of the period
+        :param finish_time: the end of the period
+        :return: the tuple: (chat_id, name, datetime, language_code)
+        """
+        with self.connection.cursor() as cur:
+            query = sql.SQL("SELECT notes.chat_id, notes.name, notes.datetime, users.language_code "
+                            "FROM notes INNER JOIN users ON notes.chat_id = users.chat_id "
+                            "WHERE datetime BETWEEN {}::timestamp AND {}::timestamp;").format(
+                sql.Literal(start_time), sql.Literal(finish_time))
+            cur.execute(query)
+            entries = cur.fetchall()
+        return entries
