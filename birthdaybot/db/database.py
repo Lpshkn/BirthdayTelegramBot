@@ -47,22 +47,22 @@ class Database:
                         "END IF; "
                         "END $$;")
 
+            cur.execute("CREATE TABLE IF NOT EXISTS Conversations ("
+                        "chat_id integer CONSTRAINT conversations_pkey PRIMARY KEY,"
+                        "main_menu_state integer NULL);")
+
             cur.execute("CREATE TABLE IF NOT EXISTS Chats ("
-                        "chat_id integer CONSTRAINT chats_pkey PRIMARY KEY,"
+                        "chat_id integer CONSTRAINT chats_pkey PRIMARY KEY REFERENCES conversations "
+                        "ON DELETE CASCADE ON UPDATE CASCADE,"
                         "title varchar(256),"
                         "description varchar(256),"
                         "photo varchar(1000),"
                         "type chat_type,"
                         "time_recall timetz NOT NULL DEFAULT '12:00 MSK');")
 
-            cur.execute("CREATE TABLE IF NOT EXISTS Conversations ("
-                        "chat_id integer CONSTRAINT conversations_pkey PRIMARY KEY REFERENCES chats "
-                        "ON DELETE CASCADE ON UPDATE CASCADE,"
-                        "main_menu_state integer NULL);")
-
             cur.execute("CREATE TABLE IF NOT EXISTS Users ("
                         "user_id integer CONSTRAINT users_pkey PRIMARY KEY,"
-                        "chat_id integer REFERENCES Chats ON DELETE SET NULL ON UPDATE CASCADE,"
+                        "chat_id integer REFERENCES conversations ON DELETE SET NULL ON UPDATE CASCADE,"
                         "username varchar(32),"
                         "first_name varchar(256),"
                         "last_name varchar(256),"
@@ -70,7 +70,7 @@ class Database:
                         "language_code varchar(10) DEFAULT 'en');")
 
             cur.execute("CREATE TABLE IF NOT EXISTS Notes ("
-                        "chat_id integer REFERENCES Chats ON DELETE CASCADE ON UPDATE CASCADE,"
+                        "chat_id integer REFERENCES conversations ON DELETE CASCADE ON UPDATE CASCADE,"
                         "name varchar(4096) NOT NULL UNIQUE,"
                         "datetime timestamptz(0) NOT NULL,"
                         "CONSTRAINT notes_pkey PRIMARY KEY(chat_id, name));")
