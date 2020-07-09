@@ -1,39 +1,18 @@
 """
 This module implements the database interaction and other methods to provide getting data easier.
 """
-import psycopg2
 import logging
-import sys
+from birthdaybot.db.db_connection import DatabaseConnection
 from collections import defaultdict
 from psycopg2 import sql
 from datetime import datetime
 
 
-class Database:
+class Database(DatabaseConnection):
     def __init__(self, json_obj):
-        self._name = json_obj["PG_NAME"]
-        self._user = json_obj["PG_USER"]
-        self._password = json_obj["PG_PSWD"]
-        self._host = json_obj["PG_HOST"]
-        self._port = json_obj["PG_PORT"]
-
-        self.connection = self._connect()
+        super().__init__(json_obj)
         self.connection.autocommit = True
-
         self._create_tables()
-
-    def _connect(self):
-        try:
-            connection = psycopg2.connect(database=self._name,
-                                          user=self._user,
-                                          password=self._password,
-                                          host=self._host,
-                                          port=self._port)
-
-            return connection
-        except psycopg2.OperationalError as e:
-            print("Error: {}".format(e), file=sys.stderr)
-            exit(-2)
 
     def _create_tables(self):
         """
