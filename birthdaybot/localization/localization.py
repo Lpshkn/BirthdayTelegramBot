@@ -63,3 +63,7 @@ def cancel(language_code: str):
 
 def accept(language_code: str):
     return _get_info(os.path.join("./localization", get_language_code(language_code), "info", "accept.html"))
+
+
+def recall_message(language_code: str):
+    return _get_info(os.path.join("./localization", get_language_code(language_code), "info", "recall_message.html"))
