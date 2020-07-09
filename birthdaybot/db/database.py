@@ -4,6 +4,7 @@ This module implements the database interaction and other methods to provide get
 import psycopg2
 import logging
 import sys
+from collections import defaultdict
 from psycopg2 import sql
 from datetime import datetime
 
@@ -75,52 +76,22 @@ class Database:
                         "datetime timestamptz(0) NOT NULL,"
                         "CONSTRAINT notes_pkey PRIMARY KEY(chat_id, name));")
 
-    def update_conversation(self, conversations: dict, name: str = None, key: tuple = None):
+    def update_conversations(self, conversations: dict):
         """
         Method updates a conversation's state in the database.
 
-        :param name: the name of a Conversation handler
         :param conversations: a dictionary containing chat_id and conversation state
-        :param key: chat_id
         """
-        self.add_chats(conversations, name)
+        # Conversations is dict containing items like: "name_conversation_handler: {chat_id: state}"
+        # And it's necessary to swap these values to pass it into the updating data method
+        # Now it will be like: "chat_id: {name_conversation_handler: state}"
+        _conversations = defaultdict(dict, {})
+        for name, id_states in conversations.items():
+            for chat_id, state in id_states.items():
+                _conversations[chat_id[0]][name] = state
+        self.update_data('conversations', _conversations)
 
-        if name and key:
-            chat_id = key[0]
-            with self.connection.cursor() as cur:
-                query = sql.SQL("INSERT INTO conversations(chat_id, {0}) VALUES ({1}, {2})"
-                                "ON CONFLICT (chat_id) DO UPDATE SET {0} = excluded.{0}").format(
-                    sql.Identifier(name), sql.Literal(chat_id), sql.Literal(conversations[name][key])
-                )
-                cur.execute(query)
-        else:
-            with self.connection.cursor() as cur:
-                for key, value in conversations["main_menu_state"].items():
-                    chat_id = key[0]
-                    query = sql.SQL("INSERT INTO conversations(chat_id, main_menu_state) VALUES ({0}, {1})"
-                                    "ON CONFLICT (chat_id) DO UPDATE SET main_menu_state = excluded.main_menu_state").format(
-                        sql.Literal(chat_id), sql.Literal(value)
-                    )
-                    cur.execute(query)
-
-    def add_chats(self, conversations: dict, name: str = None):
-        """
-        Method to add chat_ids into the database.
-
-        :param conversations: a dictionary containing chat_id and conversation state
-        :param name: the name of a Conversation handler
-        """
-        if not name:
-            name = "main_menu_state"
-
-        with self.connection.cursor() as cur:
-            for key in conversations[name].keys():
-                chat_id = key[0]
-                query = sql.SQL("INSERT INTO chats(chat_id) VALUES ({0})"
-                                "ON CONFLICT (chat_id) DO NOTHING").format(sql.Literal(chat_id))
-                cur.execute(query)
-
-    def get_conversation(self, name: str) -> dict:
+    def get_conversations(self) -> dict:
         """
         Method gets conversation states from the database.
 
@@ -129,13 +100,15 @@ class Database:
         the user_id and the message_id may be passed. But now it isn't required and just user_id will be sent.
         This fact may be changed in the ConversationHandler constructor (parameters per_chat, per_user, per_message)
 
-        :param name: the name of a Conversation handler
         :return: dictionary
         """
-        with self.connection.cursor() as cur:
-            query = sql.SQL("SELECT chat_id, {} FROM conversations").format(sql.Identifier(name))
-            cur.execute(query)
-            return {(chat_id,): state for (chat_id, state) in cur.fetchall()}
+        # It's necessary for the handler that the dictionary will contain the name of the handler like the key
+        # Therefore, it must be swapped
+        conversations = defaultdict(dict, {})
+        for chat_id, names_states in self.get_data('conversations').items():
+            for name, state in names_states.items():
+                conversations[name][(chat_id,)] = state
+        return conversations
 
     def get_chat_data(self) -> dict:
         """
