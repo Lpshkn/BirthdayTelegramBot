@@ -62,12 +62,12 @@ class BotPersistence(BasePersistence):
         if self.conversations:
             pass
         else:
-            data = self.database.get_conversation(name)
+            data = self.database.get_conversations()
             if not data:
                 data = {}
             self.conversations = data
 
-        return self.conversations.copy()
+        return self.conversations.get(name, {}).copy()
 
     def update_chat_data(self, chat_id, data):
         """
@@ -116,17 +116,17 @@ class BotPersistence(BasePersistence):
         self.conversations[name][key] = new_state
 
         if not self.on_flush:
-            self.database.update_conversation(self.conversations, name, key=key)
+            self.database.update_conversations(self.conversations)
 
     def flush(self):
         if self.user_data:
-            pass
+            self.database.update_user_data(self.user_data)
         if self.chat_data:
             self.database.update_chat_data(self.chat_data)
         if self.bot_data:
             pass
         if self.conversations:
-            self.database.update_conversation(self.conversations)
+            self.database.update_conversations(self.conversations)
 
         self.database.connection.close()
 
