@@ -132,3 +132,14 @@ def process_entries(text: str, update: telegram.Update, context: telegram.ext.Ca
                                 text=localization.error_adding_entry(code).format('\n'.join(incorrect_lines)),
                                 parse_mode=telegram.ParseMode.HTML)
     return entries
+
+
+def callback_recall_send(context: telegram.ext.CallbackContext):
+    """
+    This is callback function that will be called when a job will be handled.
+    This function send to a user the recall about his friends' birthday.
+    """
+    chat_id, name, entry_date, language_code = context.job.context
+    context.bot.sendMessage(chat_id=chat_id,
+                            text=localization.recall_message(language_code).format(name),
+                            parse_mode=telegram.ParseMode.HTML)
