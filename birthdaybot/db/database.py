@@ -232,3 +232,13 @@ class Database(DatabaseConnection):
             cur.execute(query)
             entries = cur.fetchall()
         return entries
+
+    def notify(self, notify):
+        """
+        This method notifies the database of the event with the name 'notify'.
+
+        :param notify: the name of the channel
+        """
+        with self.connection.cursor() as cur:
+            query = sql.SQL("NOTIFY {};").format(sql.Identifier(notify))
+            cur.execute(query)
