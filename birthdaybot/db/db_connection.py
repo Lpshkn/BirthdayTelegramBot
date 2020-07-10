@@ -13,6 +13,7 @@ class DatabaseConnection(ABC):
         self._password = json_obj["PG_PSWD"]
         self._host = json_obj["PG_HOST"]
         self._port = json_obj["PG_PORT"]
+        self._credentials = json_obj
 
         self.connection = self._connect()
 
@@ -28,3 +29,7 @@ class DatabaseConnection(ABC):
         except psycopg2.OperationalError as e:
             print("Error: {}".format(e), file=sys.stderr)
             exit(-2)
+
+    @property
+    def credentials(self):
+        return self._credentials
