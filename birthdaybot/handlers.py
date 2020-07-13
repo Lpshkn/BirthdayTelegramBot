@@ -4,8 +4,10 @@ Module for all the handlers which will be processed by the ConversationHandler
 import re
 import telegram
 import birthdaybot.menus as menus
+import logging
+from birthdaybot.db.database import Database
 from birthdaybot.localization import localization, date
-from telegram.ext import Updater
+from telegram.ext import Updater, JobQueue
 from datetime import datetime
 
 # Define all the states of the bot
@@ -134,12 +136,29 @@ def process_entries(text: str, update: telegram.Update, context: telegram.ext.Ca
     return entries
 
 
-def callback_recall_send(context: telegram.ext.CallbackContext):
+def recall_send_callback(context: telegram.ext.CallbackContext):
     """
-    This is callback function that will be called when a job will be handled.
+    This is a callback function that will be called when a job will be handled.
     This function send to a user the recall about his friends' birthday.
     """
     chat_id, name, entry_date, language_code = context.job.context
     context.bot.sendMessage(chat_id=chat_id,
                             text=localization.recall_message(language_code).format(name),
                             parse_mode=telegram.ParseMode.HTML)
+
+
+def run_entries_jobs(job_queue: JobQueue, database: Database, start_time: datetime, finish_time: datetime):
+    """
+    Function will get entries from the database between the specific period and
+    run new jobs that will call the function of recalling about events.
+
+    :param job_queue: the JobQueue instance
+    :param database: the Database instance
+    :param start_time: the start time of the period
+    :param finish_time: the end time of the period
+    """
+    entries = database.get_entries(start_time, finish_time)
+    for chat_id, name, entry_date, language_code in entries:
+        job_queue.run_once(callback=recall_send_callback,
+                           when=entry_date,
+                           context=(chat_id, name, entry_date, language_code))
