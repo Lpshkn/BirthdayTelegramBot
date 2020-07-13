@@ -147,6 +147,32 @@ def recall_send_callback(context: telegram.ext.CallbackContext):
                             parse_mode=telegram.ParseMode.HTML)
 
 
+def process_entries_callback(context):
+    """
+    This is a callback function to get entries from the database and run new jobs.
+
+    :param context: can be CallbackContext or just a dictionary that containing arguments
+    """
+    job_queue = None
+    start_time = None
+    finish_time = None
+    database = None
+
+    if isinstance(context, telegram.ext.CallbackContext):
+        start_time, finish_time, database = context.job.context
+        job_queue = context.job_queue
+    elif isinstance(context, dict):
+        job_queue = context['context']
+        start_time = context['start_time']
+        finish_time = context['finish_time']
+        database = context['database']
+    else:
+        logging.error("Not CallbackContext or JobQueue was passed into the 'callback_check_entries' function")
+        exit(-1)
+
+    run_entries_jobs(job_queue, database, start_time, finish_time)
+
+
 def run_entries_jobs(job_queue: JobQueue, database: Database, start_time: datetime, finish_time: datetime):
     """
     Function will get entries from the database between the specific period and
