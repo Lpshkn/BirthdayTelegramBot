@@ -20,7 +20,7 @@ class DatabaseNotify(DatabaseConnection):
         self.connection.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
         self.__listening = False
 
-    def __listen(self, callable_function):
+    def __listen(self, callable_function, *args):
         if self.__listening:
             logging.warning("You're trying to run listening to the database, but it is already listening")
         else:
@@ -30,7 +30,9 @@ class DatabaseNotify(DatabaseConnection):
                     self.connection.poll()
                     while self.connection.notifies:
                         pid, notify = self.connection.notifies.pop()
-                        callable_function(pid, notify)
+
+                        # Call the callable function and pass it the dictionary of arguments
+                        callable_function(args[0])
 
     def listen(self, notify):
         """Subscribe to a PostgreSQL NOTIFY"""
@@ -48,12 +50,13 @@ class DatabaseNotify(DatabaseConnection):
         """Call to stop the listen thread"""
         self.__listening = False
 
-    def run(self, callable_function):
+    def run(self, callable_function, **kwargs):
         """
         Start listening in a separate process and return that as an instance
 
         :param callable_function: the function that will be called when a notify will be occurred
+        :param kwargs: a dictionary containing arguments and its values
         """
-        proc = Process(target=self.__listen, args=(callable_function,))
+        proc = Process(target=self.__listen, args=(callable_function, kwargs))
         proc.start()
         return proc
