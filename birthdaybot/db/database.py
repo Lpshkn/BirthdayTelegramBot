@@ -262,7 +262,7 @@ class Database(DatabaseConnection):
                             "WHERE datetime BETWEEN {}::timestamp AND {}::timestamp;").format(
                 sql.Literal(start_time), sql.Literal(finish_time))
             cur.execute(query)
-            entries = cur.fetchall()
+            entries = [Entry(entry[0], entry[1], entry[2], entry[3]) for entry in cur.fetchall()]
         return entries
 
     def notify(self, notify):
@@ -274,3 +274,11 @@ class Database(DatabaseConnection):
         with self.connection.cursor() as cur:
             query = sql.SQL("NOTIFY {};").format(sql.Identifier(notify))
             cur.execute(query)
+
+
+class Entry:
+    def __init__(self, chat_id: int, name: str, entry_date: dt.datetime, language_code: str):
+        self.chat_id = chat_id
+        self.name = name
+        self.entry_date = entry_date
+        self.language_code = language_code
