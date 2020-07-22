@@ -1,11 +1,15 @@
 """
 This module implements the database interaction and other methods to provide getting data easier.
 """
+import datetime as dt
 import logging
 from birthdaybot.db.db_connection import DatabaseConnection
 from collections import defaultdict
 from psycopg2 import sql
-from datetime import datetime
+
+NOTIFY_INSERT_NOTES = 'insert_notes'
+NOTIFY_UPDATE_NOTES = 'update_notes'
+NOTIFY_DELETE_NOTES = 'delete_notes'
 
 
 class Database(DatabaseConnection):
@@ -26,6 +30,30 @@ class Database(DatabaseConnection):
                         "CREATE TYPE chat_type AS ENUM ('private', 'group', 'channel', 'supergroup'); "
                         "END IF; "
                         "END $$;")
+
+            cur.execute(sql.SQL("CREATE OR REPLACE FUNCTION notify_notes() RETURNS trigger AS $$ "
+                                "BEGIN "
+                                "IF (TG_OP = 'DELETE') THEN "
+                                "PERFORM pg_notify(CAST({} AS text), tg_name);"
+                                "ELSIF (TG_OP = 'UPDATE') THEN "
+                                "PERFORM pg_notify(CAST({} AS text), tg_name);"
+                                "ELSIF (TG_OP = 'INSERT') THEN "
+                                "PERFORM pg_notify(CAST({} AS text), tg_name);"
+                                "END IF;"
+                                "RETURN NULL; "
+                                "END; "
+                                "$$ LANGUAGE plpgsql;").format(sql.Literal(NOTIFY_DELETE_NOTES),
+                                                               sql.Literal(NOTIFY_UPDATE_NOTES),
+                                                               sql.Literal(NOTIFY_INSERT_NOTES)))
+
+            cur.execute(sql.SQL("DO $$"
+                                "BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'notify_notes') THEN "
+                                "CREATE TRIGGER notify_notes "
+                                "AFTER INSERT OR UPDATE OR DELETE ON notes "
+                                "FOR EACH STATEMENT "
+                                "EXECUTE PROCEDURE notify_notes();"
+                                "END IF;"
+                                "END; $$;"))
 
             cur.execute("CREATE TABLE IF NOT EXISTS Conversations ("
                         "chat_id integer CONSTRAINT conversations_pkey PRIMARY KEY,"
