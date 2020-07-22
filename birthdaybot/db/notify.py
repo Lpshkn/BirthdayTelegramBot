@@ -7,7 +7,7 @@ import psycopg2.extensions
 import logging
 from select import select
 from psycopg2 import sql
-from multiprocessing import Process
+from threading import Thread
 from birthdaybot.db.db_connection import DatabaseConnection
 
 
@@ -57,6 +57,6 @@ class DatabaseNotify(DatabaseConnection):
         :param callable_function: the function that will be called when a notify will be occurred
         :param kwargs: a dictionary containing arguments and its values
         """
-        proc = Process(target=self.__listen, args=(callable_function, kwargs))
+        proc = Thread(target=self.__listen, args=(callable_function, kwargs))
         proc.start()
         return proc
