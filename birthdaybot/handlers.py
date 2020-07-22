@@ -107,22 +107,36 @@ def process_entries(text: str, update: telegram.Update, context: telegram.ext.Ca
     incorrect_lines = set()
     entries = set()
     for line in text.splitlines():
+        line.strip()
         # Check the line matches the pattern
         if not re.match(
-                r"^[\w ]+ *- *((0?[1-9])|([1-2][0-9])|(3[0-1]))(( +[а-яА-Яa-zA-Z]{3,9})|([./]((0?[1-9])|(1[0-2]))))$",
+                r"^[\w ]+ *- *((0?[1-9])|([1-2][0-9])|(3[0-1]))(( +[а-яА-Яa-zA-Z]{3,9})|([./]((0?[1-9])|(1[0-2]))))"
+                r"( +((0?[0-9])|(1[0-9])|(2[0-3])):([0-5][0-9])(:[0-5][0-9])?)?$",
                 line, re.IGNORECASE):
             incorrect_lines.add(line)
         else:
             # Get the name and the date of an entry
             name, date_entry = [x.strip() for x in line.split('-')]
-            day, month = re.split(r'[ ./]+', date_entry, maxsplit=1)
+
+            time = None
+            _splits = re.split(r'[ ./]+', date_entry, maxsplit=2)
+            if len(_splits) == 2:
+                day, month = _splits
+            elif len(_splits) == 3:
+                day, month, time = _splits
+                time = dt.time.fromisoformat(time)
+            else:
+                raise ValueError("Incorrect entry in the process_entries function")
+
             if re.match(r'^[a-zA-Zа-яА-Я]+$', month):
                 month = date.MONTHS[language_code].get(month, 0)
 
+            year = dt.datetime.now().year
+
             # A day or a month may be incorrect
             try:
-                date_entry = datetime.strptime("{} {}".format(day, month), "%d %m")
-                entries.add((name, date_entry))
+                date_entry = dt.date(year=year, month=int(month), day=int(day))
+                entries.add((name, date_entry, time))
             except ValueError:
                 incorrect_lines.add(line)
 
