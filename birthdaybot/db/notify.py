@@ -32,7 +32,7 @@ class DatabaseNotify(DatabaseConnection):
                         pid, notify = self.connection.notifies.pop()
 
                         # Call the callable function and pass it the dictionary of arguments
-                        callable_function(args[0])
+                        callable_function(pid, notify)
 
     def listen(self, notify):
         """Subscribe to a PostgreSQL NOTIFY"""
