@@ -1,6 +1,7 @@
 """
 Module for all the handlers which will be processed by the ConversationHandler
 """
+import datetime as dt
 import re
 import telegram
 import birthdaybot.menus as menus
@@ -8,7 +9,6 @@ import logging
 from birthdaybot.db.database import Database
 from birthdaybot.localization import localization, date
 from telegram.ext import Updater, JobQueue
-from datetime import datetime
 
 # Define all the states of the bot
 MAIN_MENU, ADD_LISTS = range(2)
@@ -147,33 +147,25 @@ def recall_send_callback(context: telegram.ext.CallbackContext):
                             parse_mode=telegram.ParseMode.HTML)
 
 
-def process_entries_callback(context):
+def process_entries_callback(context: telegram.ext.CallbackContext):
     """
-    This is a callback function to get entries from the database and run new jobs.
-
-    :param context: can be CallbackContext or just a dictionary that containing arguments
+    This is a callback function that will called everey 24 hours to update entries from the database and
+    run new jobs.
     """
-    job_queue = None
-    start_time = None
-    finish_time = None
-    database = None
+    bot = None
 
     if isinstance(context, telegram.ext.CallbackContext):
-        start_time, finish_time, database = context.job.context
-        job_queue = context.job_queue
-    elif isinstance(context, dict):
-        job_queue = context['context']
-        start_time = context['start_time']
-        finish_time = context['finish_time']
-        database = context['database']
+        bot = context.job.context
+        bot.start_time = dt.datetime.now()
+        bot.finish_time = dt.datetime.now() + dt.timedelta(days=1)
     else:
-        logging.error("Not CallbackContext or JobQueue was passed into the 'callback_check_entries' function")
+        logging.error("Not CallbackContext was passed into the 'callback_check_entries' function")
         exit(-1)
 
-    run_entries_jobs(job_queue, database, start_time, finish_time)
+    run_entries_jobs(bot.job_queue, bot.database, bot.start_time, bot.finish_time)
 
 
-def run_entries_jobs(job_queue: JobQueue, database: Database, start_time: datetime, finish_time: datetime):
+def run_entries_jobs(job_queue: JobQueue, database: Database, start_time: dt.datetime, finish_time: dt.datetime):
     """
     Function will get entries from the database between the specific period and
     run new jobs that will call the function of recalling about events.
