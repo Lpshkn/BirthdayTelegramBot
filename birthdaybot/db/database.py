@@ -229,21 +229,25 @@ class Database(DatabaseConnection):
         :param chat_id: the id of the chat
         :param entries: the set that contains tuples containing the name and the date of an entry
         """
+
         # Get recall time from the chats table for this chat_id
         with self.connection.cursor() as cur:
             query = sql.SQL("SELECT time_recall FROM chats WHERE chat_id = {}").format(sql.Literal(chat_id))
             cur.execute(query)
             time_recall = cur.fetchone()[0]
 
-        for name, entry_date in entries:
+        for name, entry_date, time in entries:
             with self.connection.cursor() as cur:
-                entry_date = str(entry_date.date()) + ' ' + str(time_recall)
+                if not time:
+                    time = time_recall
+                entry_date = dt.datetime.combine(entry_date, time)
+
                 query = sql.SQL("INSERT INTO notes(chat_id, name, datetime) VALUES ({0}, {1}, {2})"
                                 "ON CONFLICT (chat_id, name) DO UPDATE SET datetime = excluded.datetime").format(
                     sql.Literal(chat_id), sql.Literal(name), sql.Literal(entry_date))
                 cur.execute(query)
 
-    def get_entries(self, start_time: datetime, finish_time: datetime) -> list:
+    def get_entries(self, start_time: dt.datetime, finish_time: dt.datetime) -> list:
         """
         This method gets all entries from the notes table and returns these values + language_code of a user.
         Method gets entries having the datetime value is during the specific period (from start_time to finish_time).
