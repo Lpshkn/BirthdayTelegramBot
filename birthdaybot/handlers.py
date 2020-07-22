@@ -124,7 +124,13 @@ def process_entries(text: str, update: telegram.Update, context: telegram.ext.Ca
                 day, month = _splits
             elif len(_splits) == 3:
                 day, month, time = _splits
-                time = dt.time.fromisoformat(time)
+                time = time.split(':')
+                if len(time) == 2:
+                    time = dt.time(hour=int(time[0]), minute=int(time[1]))
+                elif len(time) == 3:
+                    time = dt.time(hour=int(time[0]), minute=int(time[1]), second=int(time[2]))
+                else:
+                    time = dt.time.fromisoformat('12:00:00')
             else:
                 raise ValueError("Incorrect entry in the process_entries function")
 
