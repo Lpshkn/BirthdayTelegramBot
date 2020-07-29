@@ -1,9 +1,10 @@
 """
 Module for all the actions with the Bot
 """
-from psycopg2 import sql
+import birthdaybot.db.database as db
 import telegram
 import birthdaybot.handlers as handlers
+import birthdaybot.jobs as jobs
 import logging
 import birthdaybot.menus as menus
 from datetime import timedelta, datetime
@@ -34,8 +35,8 @@ class BirthdayBot:
 
         # Time limits to update the jobs every day and
         # also check adding new entries into the database in this period
-        self.start_time = datetime.now()
-        self.finish_time = datetime.now() + timedelta(days=1)
+        self.start_time = None
+        self.finish_time = None
 
     def run(self):
         """
@@ -53,17 +54,16 @@ class BirthdayBot:
             persistent=True,
             per_user=False
         )
-        # Add a listener of the database of adding new entries
-        self.database_notify.listen('new_entry')
+        # Add a listeners of the database of Insert, Update and Delete operations
+        self.database_notify.listen(db.NOTIFY_INSERT_NOTES)
+        self.database_notify.listen(db.NOTIFY_UPDATE_NOTES)
+        self.database_notify.listen(db.NOTIFY_DELETE_NOTES)
         # Run the listener and pass to it the callback function with the arguments
-        self.database_notify.run(handlers.process_entries_callback,
-                                 context=self.job_queue,
-                                 start_time=self.start_time,
-                                 finish_time=self.finish_time,
-                                 database=self.database)
+        self.database_notify.run(self.process_notify)
+
         # Every day run the check of entries function to add new jobs
-        self.job_queue.run_repeating(handlers.process_entries_callback, interval=86400, first=0,
-                                     context=(self.start_time, self.finish_time, self.database))
+        self.job_queue.run_repeating(jobs.process_entries_callback, interval=86400, first=0,
+                                     context=self)
 
         self.dispatcher.add_handler(conversation_handler)
 
@@ -95,8 +95,6 @@ class BirthdayBot:
             if chat_id in self.entries:
                 self.database.add_entries(chat_id, self.entries[chat_id])
                 self.entries.pop(chat_id)
-                # When new entries are adding into the database, notify the listener about that
-                self.database.notify('new_entry')
 
             context.bot.sendMessage(chat_id=chat_id,
                                     text=localization.accept(code),
