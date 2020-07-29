@@ -106,3 +106,18 @@ class BirthdayBot:
             entries = handlers.process_entries(text, update, context)
             self.entries.setdefault(chat_id, set())
             self.entries[chat_id] |= entries
+
+    def process_notify(self, pid: int, notify: str):
+        """
+        This function will be called when the trigger function will run.
+        This method processes the notify and passes the notify into a specific function.
+
+        :param pid: the pid of process that raise the notify
+        :param notify: the text of the notify
+        """
+        if notify == db.NOTIFY_UPDATE_NOTES:
+            jobs.process_updating_entry_callback(self.job_queue, self.database, self.finish_time)
+        elif notify == db.NOTIFY_INSERT_NOTES:
+            jobs.process_inserting_entry_callback(self.job_queue, self.database, self.finish_time)
+        elif notify == db.NOTIFY_DELETE_NOTES:
+            pass
