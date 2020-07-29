@@ -31,30 +31,6 @@ class Database(DatabaseConnection):
                         "END IF; "
                         "END $$;")
 
-            cur.execute(sql.SQL("CREATE OR REPLACE FUNCTION notify_notes() RETURNS trigger AS $$ "
-                                "BEGIN "
-                                "IF (TG_OP = 'DELETE') THEN "
-                                "PERFORM pg_notify(CAST({} AS text), tg_name);"
-                                "ELSIF (TG_OP = 'UPDATE') THEN "
-                                "PERFORM pg_notify(CAST({} AS text), tg_name);"
-                                "ELSIF (TG_OP = 'INSERT') THEN "
-                                "PERFORM pg_notify(CAST({} AS text), tg_name);"
-                                "END IF;"
-                                "RETURN NULL; "
-                                "END; "
-                                "$$ LANGUAGE plpgsql;").format(sql.Literal(NOTIFY_DELETE_NOTES),
-                                                               sql.Literal(NOTIFY_UPDATE_NOTES),
-                                                               sql.Literal(NOTIFY_INSERT_NOTES)))
-
-            cur.execute(sql.SQL("DO $$"
-                                "BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'notify_notes') THEN "
-                                "CREATE TRIGGER notify_notes "
-                                "AFTER INSERT OR UPDATE OR DELETE ON notes "
-                                "FOR EACH STATEMENT "
-                                "EXECUTE PROCEDURE notify_notes();"
-                                "END IF;"
-                                "END; $$;"))
-
             cur.execute("CREATE TABLE IF NOT EXISTS Conversations ("
                         "chat_id integer CONSTRAINT conversations_pkey PRIMARY KEY,"
                         "main_menu_state integer NULL);")
@@ -78,10 +54,35 @@ class Database(DatabaseConnection):
                         "language_code varchar(10) DEFAULT 'en');")
 
             cur.execute("CREATE TABLE IF NOT EXISTS Notes ("
+                        "note_id serial UNIQUE,"
                         "chat_id integer REFERENCES conversations ON DELETE CASCADE ON UPDATE CASCADE,"
                         "name varchar(4096) NOT NULL UNIQUE,"
                         "datetime timestamptz(0) NOT NULL,"
                         "CONSTRAINT notes_pkey PRIMARY KEY(chat_id, name));")
+
+            cur.execute(sql.SQL("CREATE OR REPLACE FUNCTION notify_notes() RETURNS trigger AS $$ "
+                                "BEGIN "
+                                "IF (TG_OP = 'DELETE') THEN "
+                                "PERFORM pg_notify(CAST({} AS text), tg_name);"
+                                "ELSIF (TG_OP = 'UPDATE') THEN "
+                                "PERFORM pg_notify(CAST({} AS text), tg_name);"
+                                "ELSIF (TG_OP = 'INSERT') THEN "
+                                "PERFORM pg_notify(CAST({} AS text), tg_name);"
+                                "END IF;"
+                                "RETURN NULL; "
+                                "END; "
+                                "$$ LANGUAGE plpgsql;").format(sql.Literal(NOTIFY_DELETE_NOTES),
+                                                               sql.Literal(NOTIFY_UPDATE_NOTES),
+                                                               sql.Literal(NOTIFY_INSERT_NOTES)))
+
+            cur.execute(sql.SQL("DO $$"
+                                "BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'notify_notes') THEN "
+                                "CREATE TRIGGER notify_notes "
+                                "AFTER INSERT OR UPDATE OR DELETE ON notes "
+                                "FOR EACH STATEMENT "
+                                "EXECUTE PROCEDURE notify_notes();"
+                                "END IF;"
+                                "END; $$;"))
 
     def update_conversations(self, conversations: dict):
         """
@@ -257,12 +258,12 @@ class Database(DatabaseConnection):
         :return: the tuple: (chat_id, name, datetime, language_code)
         """
         with self.connection.cursor() as cur:
-            query = sql.SQL("SELECT notes.chat_id, notes.name, notes.datetime, users.language_code "
+            query = sql.SQL("SELECT notes.note_id, notes.chat_id, notes.name, notes.datetime, users.language_code "
                             "FROM notes INNER JOIN users ON notes.chat_id = users.chat_id "
                             "WHERE datetime BETWEEN {}::timestamp AND {}::timestamp;").format(
                 sql.Literal(start_time), sql.Literal(finish_time))
             cur.execute(query)
-            entries = [Entry(entry[0], entry[1], entry[2], entry[3]) for entry in cur.fetchall()]
+            entries = [Entry(entry[0], entry[1], entry[2], entry[3], entry[4]) for entry in cur.fetchall()]
         return entries
 
     def notify(self, notify):
@@ -277,7 +278,8 @@ class Database(DatabaseConnection):
 
 
 class Entry:
-    def __init__(self, chat_id: int, name: str, entry_date: dt.datetime, language_code: str):
+    def __init__(self, note_id: int, chat_id: int, name: str, entry_date: dt.datetime, language_code: str):
+        self.note_id = note_id
         self.chat_id = chat_id
         self.name = name
         self.entry_date = entry_date
