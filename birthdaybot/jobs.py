@@ -110,3 +110,21 @@ def process_updating_entry_callback(job_queue: JobQueue, database: Database, fin
 
             if not exist:
                 job.schedule_removal()
+
+
+def process_deleting_entry_callback(job_queue: JobQueue, database: Database, finish_time: dt.datetime):
+    """
+    This callback function will be called, when a Delete operation will be occurred in the database.
+    """
+    jobs = job_queue.jobs()
+    entries = database.get_entries(dt.datetime.now(), finish_time)
+    for job in jobs:
+        if isinstance(job.context, Entry):
+            exist = False
+            for entry in entries:
+                if job.context.note_id == entry.note_id:
+                    if job.context.chat_id == entry.chat_id and job.context.name == entry.name:
+                        exist = True
+                        break
+            if not exist:
+                job.schedule_removal()

@@ -120,4 +120,4 @@ class BirthdayBot:
         elif notify == db.NOTIFY_INSERT_NOTES:
             jobs.process_inserting_entry_callback(self.job_queue, self.database, self.finish_time)
         elif notify == db.NOTIFY_DELETE_NOTES:
-            pass
+            jobs.process_deleting_entry_callback(self.job_queue, self.database, self.finish_time)
